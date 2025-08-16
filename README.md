@@ -2,7 +2,7 @@
 A Python chatbot with NLP tokenization and word embeddings using NLTK and GloVe.
 
 ## Setup
-1. Install dependencies: `pip install nltk gensim`
+1. Install dependencies: `pip install -r requirements.txt`
 2. Download NLTK data: `python -c "import nltk; nltk.download('punkt_tab')"`
 3. Run: `python chatbot.py`
 
