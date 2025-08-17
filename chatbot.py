@@ -5,11 +5,11 @@ from nltk.corpus import wordnet
 import gensim.downloader as api
 import numpy as np
 
-# Download punkt tokenizer (run once per environment)
-# nltk.download("punkt")
-# nltk.download("punkt_tab")
+# Download NLTK resources (run once per environment)
+nltk.download("punkt")
+nltk.download("punkt_tab")
 nltk.download("wordnet")
-nltk.download("averaged_perceptron_tagger")
+nltk.download("averaged_perceptron_tagger")  # Added for POS tagging
 
 # Initialize the lemmatizer
 lemmatizer = WordNetLemmatizer()
@@ -19,20 +19,18 @@ print("Loading word2vec model... This might take a moment")
 word2vec_model = api.load("glove-wiki-gigaword-50")
 print("Model loaded!")
 
-
 def get_pos_tag(word):
-    """Convert NLTK POS tag to wordnet POS tag for lemmatization"""
-    tag = nltk.pos_tag([word])[0][l]
-    if tag.startswith("N"):
+    """Convert NLTK POS tag to WordNet POS tag for lemmatization."""
+    tag = nltk.pos_tag([word])[0][1]
+    if tag.startswith('N'):
         return wordnet.NOUN
-    elif tag.starswith("V"):
+    elif tag.startswith('V'):
         return wordnet.VERB
-    elif tag.startwith("J"):
+    elif tag.startswith('J'):
         return wordnet.ADJ
-    elif tag.startswith("R"):
+    elif tag.startswith('R'):
         return wordnet.ADV
-    return wordnet.NOUN
-
+    return wordnet.NOUN  # Default to noun if unknown
 
 def get_embedding(word):
     """Get the word2vec embedding for a word, if it exists."""
@@ -41,18 +39,18 @@ def get_embedding(word):
     except KeyError:
         return None
 
-
 def chatbot():
     print(
-        "Hi wanna chat? type 'exit' to quit or 'embed <word>' to see word embeddings."
+        "Hi wanna chat? Type 'exit' to quit or 'embed <word>' to see word embeddings."
     )
     while True:
         user_input = input("You: ").lower()
+        # Tokenize and lemmatize input with POS tagging
         tokens = word_tokenize(user_input)
-        lemmatized_tokens = [lemmatizer.lemmatize(token) for token in tokens]
-        print(f"Chatbot: Your imput is tokenized: {tokens}")
+        lemmatized_tokens = [lemmatizer.lemmatize(token, get_pos_tag(token)) for token in tokens]
+        print(f"Chatbot: Your input is tokenized: {tokens}")
         print(f"Chatbot: Lemmatized tokens: {lemmatized_tokens}")
-
+        
         if user_input == "exit":
             print("Bye!")
             break
@@ -75,6 +73,5 @@ def chatbot():
             print(
                 "Chatbot: Hmm, I don't know that one. Try saying 'hello', 'how are you', or 'name'"
             )
-
 
 chatbot()
