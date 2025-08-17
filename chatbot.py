@@ -4,6 +4,7 @@ from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet
 import gensim.downloader as api
 import numpy as np
+from scipy.spatial.distance import cosine
 
 # Download NLTK resources (run once per environment)
 nltk.download("punkt")
@@ -42,6 +43,37 @@ def get_embedding(word):
         return None
 
 
+def get_synonyms(word, pos=wordnet.NOUN):
+    """Get synonyms for a word using WordNet."""
+    synonyms = set()
+    for synset in wordnet.synsets(word, pos=pos):
+        for lemma in synset.lemmas():
+            synonyms.add(lemma.name().lower())
+    return synonyms
+
+
+def is_synonym_or_similar(
+    word, target_words, pos=wordnet.NOUN, similarity_threshold=0.7
+):
+    """Check if a word is a synonym or sematically similar to any target word."""
+    # Check WordNet synonyms
+    word_synonyms = get_synonyms(word, pos)
+    for target in target_words:
+        if word == target or target in word_synonyms:
+            return True
+
+    # Check GloVe similarity if no synonym found
+    word_emb = get_embedding(word)
+    if word_emb is not None:
+        for target in target_words:
+            target_emb = get_embedding(target)
+            if target_emb is not None:
+                similarity = 1 - cosine(word_emb, target_emb)
+                if similarity > similarity_threshold:
+                    return True
+    return False
+
+
 def chatbot():
     print(
         "Hi wanna chat? Type 'exit' to quit or 'embed <word>' to see word embeddings."
@@ -68,11 +100,22 @@ def chatbot():
                 )
             else:
                 print(f"Chatbot: Sorry, I don't have embedding for '{word}'.")
-        elif any(lemma in ["hello", "hi"] for lemma in lemmatized_tokens):
+        elif any(
+            is_synonym_or_similar(lemma, ["hello", "hi", "greeting"], pos=wordnet.NOUN)
+            for lemma in lemmatized_tokens
+        ):
             print("Chatbot: Hey there! How can I help you?")
-        elif any(lemma == "you" for lemma in lemmatized_tokens):
+        elif any(
+            is_synonym_or_similar(lemma, ["you", "yourself"], pos=wordnet.NOUN)
+            for lemma in lemmatized_tokens
+        ):
             print("Chatbot: I'm doing great, thanks for asking!")
-        elif any(lemma == "name" for lemma in lemmatized_tokens):
+        elif any(
+            is_synonym_or_similar(
+                lemma, ["name", "identity", "title"], pos=wordnet.NOUN
+            )
+            for lemma in lemmatized_tokens
+        ):
             print("Chatbot: My name is GingBot, nice to meet you!")
         else:
             print(
