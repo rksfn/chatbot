@@ -1,16 +1,37 @@
 import nltk
 from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+from nltk.corpus import wordnet
 import gensim.downloader as api
 import numpy as np
 
 # Download punkt tokenizer (run once per environment)
-nltk.download("punkt")
-nltk.download("punkt_tab")
+# nltk.download("punkt")
+# nltk.download("punkt_tab")
+nltk.download("wordnet")
+nltk.download("averaged_perceptron_tagger")
+
+# Initialize the lemmatizer
+lemmatizer = WordNetLemmatizer()
 
 # Load lightweight pre-trained word2vec model
 print("Loading word2vec model... This might take a moment")
 word2vec_model = api.load("glove-wiki-gigaword-50")
 print("Model loaded!")
+
+
+def get_pos_tag(word):
+    """Convert NLTK POS tag to wordnet POS tag for lemmatization"""
+    tag = nltk.pos_tag([word])[0][l]
+    if tag.startswith("N"):
+        return wordnet.NOUN
+    elif tag.starswith("V"):
+        return wordnet.VERB
+    elif tag.startwith("J"):
+        return wordnet.ADJ
+    elif tag.startswith("R"):
+        return wordnet.ADV
+    return wordnet.NOUN
 
 
 def get_embedding(word):
@@ -28,7 +49,10 @@ def chatbot():
     while True:
         user_input = input("You: ").lower()
         tokens = word_tokenize(user_input)
+        lemmatized_tokens = [lemmatizer.lemmatize(token) for token in tokens]
         print(f"Chatbot: Your imput is tokenized: {tokens}")
+        print(f"Chatbot: Lemmatized tokens: {lemmatized_tokens}")
+
         if user_input == "exit":
             print("Bye!")
             break
@@ -41,11 +65,11 @@ def chatbot():
                 )
             else:
                 print(f"Chatbot: Sorry, I don't have embedding for '{word}'.")
-        elif "hello" in user_input or "hi" in user_input:
+        elif any(lemma in ["hello", "hi"] for lemma in lemmatized_tokens):
             print("Chatbot: Hey there! How can I help you?")
-        elif "how are you" in user_input:
+        elif any(lemma == "you" for lemma in lemmatized_tokens):
             print("Chatbot: I'm doing great, thanks for asking!")
-        elif "name" in user_input:
+        elif any(lemma == "name" for lemma in lemmatized_tokens):
             print("Chatbot: My name is GingBot, nice to meet you!")
         else:
             print(
