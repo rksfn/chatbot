@@ -117,6 +117,11 @@ def chatbot():
             for lemma in lemmatized_tokens
         ):
             print("Chatbot: My name is GingBot, nice to meet you!")
+        elif any(
+            is_synonym_or_similar(lemma, ["cook", "bake"], pos=wordnet.NOUN)
+            for lemma in lemmatized_tokens
+        ):
+            print("Chatbot: The veggie is better if cooked in the oven! That's a fact.")
         else:
             print(
                 "Chatbot: Hmm, I don't know that one. Try saying 'hello', 'how are you', or 'name'"
