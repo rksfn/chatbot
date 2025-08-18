@@ -7,6 +7,7 @@ import numpy as np
 from scipy.spatial.distance import cosine
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
+from sklearn.multiclass import OneVsRestClassifier
 import pandas as pd
 
 # Download NLTK resources (run once per environment)
@@ -110,7 +111,7 @@ def train_intent_classifier(data):
     y = labels
 
     # Train logistic regression model
-    classifier = LogisticRegression(multi_class="ovr")
+    classifier = OneVsRestClassifier(LogisticRegression())
     classifier.fit(X, y)
 
     return vectorizer, classifier
