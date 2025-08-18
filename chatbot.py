@@ -38,6 +38,9 @@ data = [
     ("say something funny", "joke"),
     ("cook something", "cooking"),
     ("how to bake", "cooking"),
+    ("what's the weather", "weather"),
+    ("is it sunny today", "weather"),
+    ("how's the weather like", "weather"),
 ]
 
 
@@ -126,6 +129,8 @@ def chatbot():
     print(
         "Hi! I'm an intent-based chatbot. Type 'exit' to quit or 'embed <word>' to see word embeddings."
     )
+    confidence_threshold = 0.6
+
     while True:
         user_input = input("You: ").lower()
         tokens = word_tokenize(user_input)
@@ -152,28 +157,82 @@ def chatbot():
             processed_input = " ".join(lemmatized_tokens)
             X_input = vectorizer.transform([processed_input])
             predicted_intent = classifier.predict(X_input)[0]
+            confidence = classifier.predict_proba(X_input)[0].max()
+            print(
+                f"Chatbot: Predicted intent: {predicted_intent} (Confidence: {confidence:.2f})"
+            )
 
-            # Respond based on predicted intent
-            if predicted_intent == "greeting":
-                print("Chatbot: Hey there! How can I help you?")
-            elif predicted_intent == "question":
-                print(
-                    "Chatbot: I'm doing great, thanks for asking! What's on your mind?"
-                )
-            elif predicted_intent == "question_name":
-                print("Chatbot: My name is GingBot, nice to meet you!")
-            elif predicted_intent == "joke":
-                print(
-                    "Chatbot: Why did the scarecrow become a programmer? Because he was outstanding in his field!"
-                )
-            elif predicted_intent == "cooking":
-                print(
-                    "Chatbot: The veggie is better if cooked in the oven! That's a fact."
-                )
+            # Use ML prediction if confidence is high
+            if confidence >= confidence_threshold:
+                if predicted_intent == "greeting":
+                    print("Chatbot: Hey there! How can I help you?")
+                elif predicted_intent == "question":
+                    print(
+                        "Chatbot: I'm doing great, thanks for asking! What's on your mind?"
+                    )
+                elif predicted_intent == "question_name":
+                    print("Chatbot: My name is GingBot, nice to meet you!")
+                elif predicted_intent == "joke":
+                    print(
+                        "Chatbot: Why did the scarecrow become a programmer? Because he was outstanding in his field!"
+                    )
+                elif predicted_intent == "cooking":
+                    print(
+                        "Chatbot: The veggie is better if cooked in the oven! That's a fact."
+                    )
+                else:
+                    print(
+                        "Chatbot: Hmm, I don't know that one. Try saying 'hello', 'how are you', 'tell me a joke', or 'cook something'."
+                    )
             else:
-                print(
-                    "Chatbot: Hmm, I don't know that one. Try saying 'hello', 'how are you', 'tell me a joke', or 'cook something'."
-                )
+                if any(
+                    is_synonym_or_similar(
+                        lemma, ["hello", "hi", "greeting"], pos=wordnet.NOUN
+                    )
+                    for lemma in lemmatized_tokens
+                ):
+                    print("Chatbot: Hey there! How can I help you? (Rule-based)")
+                elif any(
+                    is_synonym_or_similar(lemma, ["you", "yourself"], pos=wordnet.NOUN)
+                    for lemma in lemmatized_tokens
+                ):
+                    print(
+                        "Chatbot: I'm doing great, thanks for asking! What's on your mind? (Rule-based)"
+                    )
+                elif any(
+                    is_synonym_or_similar(
+                        lemma, ["name", "identity", "title"], pos=wordnet.NOUN
+                    )
+                    for lemma in lemmatized_tokens
+                ):
+                    print("Chatbot: My name is GingBot, nice to meet you! (Rule-based)")
+                elif any(
+                    is_synonym_or_similar(lemma, ["joke", "funny"], pos=wordnet.NOUN)
+                    for lemma in lemmatized_tokens
+                ):
+                    print(
+                        "Chatbot: Why did the scarecrow become a programmer? Because he was outstanding in his field! (Rule-based)"
+                    )
+                elif any(
+                    is_synonym_or_similar(lemma, ["cook", "bake"], pos=wordnet.NOUN)
+                    for lemma in lemmatized_tokens
+                ):
+                    print(
+                        "Chatbot: The veggie is better if cooked in the oven! That's a fact. (Rule-based)"
+                    )
+                elif any(
+                    is_synonym_or_similar(
+                        lemma, ["weather", "forecast"], pos=wordnet.NOUN
+                    )
+                    for lemma in lemmatized_tokens
+                ):
+                    print(
+                        "Chatbot: Sunny vibes here! What's the weather like for you? (Rule-based)"
+                    )
+                else:
+                    print(
+                        "Chatbot: Hmm, I don't know that one. Try saying 'hello', 'how are you', 'tell me a joke', 'cook something', or 'what's the weather'."
+                    )
 
 
 chatbot()
